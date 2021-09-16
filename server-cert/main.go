@@ -66,6 +66,7 @@ func main() {
 		// It will use system pool if --cacert is not given.
 		tlsConfig.ClientCAs = pool
 		tlsConfig.ClientAuth = tls.RequireAndVerifyClientCert
+		// Disable GetConfigForClient as it will not require mTLS by default.
 		tlsConfig.GetConfigForClient = nil
 	}
 

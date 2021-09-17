@@ -1,0 +1,11 @@
+{{- if .Values.helloworld.root_ca }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "helloworld.fullname" . }}-certs
+  labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
+data:
+  root_ca.crt: |-
+    {{- .Values.helloworld.root_ca | nindent 4 }}
+{{- end }}

@@ -1,0 +1,40 @@
+{{- if .Values.certIssuer.create }}
+apiVersion: certmanager.step.sm/v1beta1
+kind: {{ .Values.certIssuer.kind }}
+metadata:
+  name: {{ include "helloworld.certIssuerName" . }}
+  labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
+spec:
+  # The CA URL.
+  url: {{ required "A valid .Values.certIssuer.caUrl is required" .Values.certIssuer.caUrl }}
+  # The base64 encoded version of the CA root certificate in PEM format.
+  caBundle: {{ required "A valid .Values.certIssuer.caBundle is required" .Values.certIssuer.caBundle }}
+  # The provisioner name, kid, and a reference to the provisioner password secret.
+  provisioner:
+    name: {{ required "A valid .Values.certIssuer.provisioner.name is required" .Values.certIssuer.provisioner.name }}
+    kid: {{ required "A valid .Values.certIssuer.provisioner.kid is required" .Values.certIssuer.provisioner.kid }}
+    passwordRef:
+      name: {{ required "A valid .Values.certIssuer.provisioner.passwordName is required" .Values.certIssuer.provisioner.passwordName }}
+      key: {{ required ".Values.certIssuer.provisioner.passwordKey is required" .Values.certIssuer.provisioner.passwordKey }}
+{{- end }}
+---
+{{- if .Values.certIssuer.createCert }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "helloworld.fullname" . }}-tls
+  labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
+spec:
+  secretName: {{ .Values.helloworld.secretServerCerts }}
+  duration: 24h
+  dnsNames:
+    - {{ include "helloworld.domain" . }}
+  ipAddresses:
+    - 127.0.0.1
+  issuerRef:
+    name: {{ include "helloworld.certIssuerName" . }}
+    kind: {{ .Values.certIssuer.kind }}
+    group: {{ .Values.certIssuer.group }}
+{{- end }}

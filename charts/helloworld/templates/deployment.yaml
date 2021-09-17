@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "helloworld.fullname" . }}
+  labels:
+    {{- include "helloworld.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "helloworld.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "helloworld.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "helloworld.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      volumes:
+        - name: certs
+          configMap: 
+            name: {{ include "helloworld.configMapCerts" . }}
+        {{- if not .Values.helloworld.acme }}
+        - name: serverCerts
+          secret:
+            secretName: {{ .Values.helloworld.secretServerCerts }}
+        {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: [
+            {{- if .Values.helloworld.acme }}
+            "/usr/local/bin/server-acme"
+            {{- else }}
+            "/usr/local/bin/server-cert"
+            {{- end }}
+          ]
+          args: [
+            "--address", ":{{ .Values.helloworld.port }}",
+            {{- if .Values.helloworld.acme }}
+            "--domain", "{{ include "helloworld.domain" . }}",
+            "--directory", "{{ .Values.helloworld.directory }}",
+            {{- else }}
+            "--cert": "{{ .Values.helloworld.cert }}",
+            "--key": "{{ .Values.helloworld.key }}"
+            {{- end }}
+            {{- if .Values.helloworld.cacert }}
+            "--cacert", "{{ .Values.helloworld.cacert }}",
+            {{- end }}
+            {{- if .Values.helloworld.mtls }}
+            "--mtls",
+            {{- end }}
+          ]
+          ports:
+            - name: grpc
+              containerPort: {{ .Values.helloworld.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: certs
+              mountPath: {{ dir .Values.helloworld.cacert }}
+              readOnly: true
+            {{- if not .Values.helloworld.acme }}
+            - name: serverCerts
+              mountPath: {{ dir .Values.helloworld.cert }}
+              readOnly: true
+            {{- end }}
+          livenessProbe:
+            exec:
+              command: [
+                "/usr/local/bin/grpc-health-probe", "-tls",
+                "-tls-server-name", {{ include "helloworld.domain" . }},
+                "-tls-ca-cert", "/home/step/certs/root_ca.crt",
+                "-addr=:{{ .Values.helloworld.port }}",
+              ]
+            initialDelaySeconds: 5
+          {{- if not .Values.helloworld.acme }}
+          readinessProbe:
+            exec:
+              command: [
+                "/usr/local/bin/grpc-health-probe", "-tls",
+                "-tls-server-name", {{ include "helloworld.domain" . }},
+                "-tls-ca-cert", "/home/step/certs/root_ca.crt",
+                "-addr=:{{ .Values.helloworld.port }}",
+              ]
+            initialDelaySeconds: 5
+          {{- end }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

@@ -1,0 +1,6 @@
+{
+	"ca-url": "https://step-ca.docker:9000",
+	"ca-config": "/home/step/config/ca.json",
+	"fingerprint": "d4944875d7c94905aac7232f4a7155e6e46fffa2464f1b98e088f57c34e16199",
+	"root": "/home/step/certs/root_ca.crt"
+}

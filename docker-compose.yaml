@@ -1,0 +1,26 @@
+version: '3'
+services:
+  step-ca.docker:
+    image: smallstep/step-ca:latest
+    volumes:
+      - "./pki:/home/step"
+  server.docker:
+    image: smallstep/go-grpc-example:latest
+    environment:
+      - DOMAIN=server.docker
+      - STEP_CA_URL=https://step-ca.docker:9000
+      - STEP_CA_FINGERPRINT=d4944875d7c94905aac7232f4a7155e6e46fffa2464f1b98e088f57c34e16199
+    depends_on:
+      - step-ca.docker
+  client.docker:
+    image: smallstep/go-grpc-example:latest
+    environment:
+      - DOMAIN=server.docker
+      - STEP_CA_URL=https://step-ca.docker:9000
+      - STEP_CA_FINGERPRINT=d4944875d7c94905aac7232f4a7155e6e46fffa2464f1b98e088f57c34e16199
+    depends_on:
+      - step-ca.docker
+    healthcheck:
+      disable: true
+    command:
+      - bash

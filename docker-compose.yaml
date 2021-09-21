@@ -4,18 +4,30 @@ services:
     image: smallstep/step-ca:latest
     volumes:
       - "./pki:/home/step"
-  server.docker:
+  server-acme.docker:
     image: smallstep/go-grpc-example:latest
     environment:
-      - DOMAIN=server.docker
+      - DOMAIN=server-acme.docker
       - STEP_CA_URL=https://step-ca.docker:9000
       - STEP_CA_FINGERPRINT=d4944875d7c94905aac7232f4a7155e6e46fffa2464f1b98e088f57c34e16199
     depends_on:
       - step-ca.docker
+  server-cert.docker:
+    image: smallstep/go-grpc-example:latest
+    environment:
+      - DOMAIN=server-cert.docker
+      - STEP_CA_URL=https://step-ca.docker:9000
+      - STEP_CA_FINGERPRINT=d4944875d7c94905aac7232f4a7155e6e46fffa2464f1b98e088f57c34e16199
+      - STEP_CA_RENEW=true
+      - STEP_CA_PROVISIONER=admin
+      - STEP_CA_PASSWORD=password
+    depends_on:
+      - step-ca.docker
+    command: /usr/local/bin/server-cert --cert /home/step/tls.crt --key /home/step/tls.key
   client.docker:
     image: smallstep/go-grpc-example:latest
     environment:
-      - DOMAIN=server.docker
+      - DOMAIN=client.docker
       - STEP_CA_URL=https://step-ca.docker:9000
       - STEP_CA_FINGERPRINT=d4944875d7c94905aac7232f4a7155e6e46fffa2464f1b98e088f57c34e16199
     depends_on:

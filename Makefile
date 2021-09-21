@@ -21,3 +21,9 @@ docker:
 docker-dev: docker
 	$Q docker tag ${NAME}:latest localhost:5000/${NAME}:latest
 	$Q docker push localhost:5000/${NAME}:latest
+
+docker-push: docker
+	$Q docker tag ${NAME}:latest smallstep/${NAME}:0.1.0
+	$Q docker tag ${NAME}:latest smallstep/${NAME}:latest
+	$Q docker push smallstep/${NAME}:0.1.0
+	$Q docker push smallstep/${NAME}:latest

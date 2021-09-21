@@ -32,7 +32,7 @@ spec:
           configMap: 
             name: {{ include "helloworld.configMapCerts" . }}
         {{- if not .Values.helloworld.acme }}
-        - name: serverCerts
+        - name: server-certs
           secret:
             secretName: {{ .Values.helloworld.secretServerCerts }}
         {{- end }}
@@ -55,8 +55,8 @@ spec:
             "--domain", "{{ include "helloworld.domain" . }}",
             "--directory", "{{ .Values.helloworld.directory }}",
             {{- else }}
-            "--cert": "{{ .Values.helloworld.cert }}",
-            "--key": "{{ .Values.helloworld.key }}"
+            "--cert", "{{ .Values.helloworld.cert }}",
+            "--key", "{{ .Values.helloworld.key }}",
             {{- end }}
             {{- if .Values.helloworld.cacert }}
             "--cacert", "{{ .Values.helloworld.cacert }}",
@@ -74,7 +74,7 @@ spec:
               mountPath: {{ dir .Values.helloworld.cacert }}
               readOnly: true
             {{- if not .Values.helloworld.acme }}
-            - name: serverCerts
+            - name: server-certs
               mountPath: {{ dir .Values.helloworld.cert }}
               readOnly: true
             {{- end }}
